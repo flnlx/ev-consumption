@@ -1,0 +1,24 @@
+{
+  "name": "ev-consumption-pages",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/dev.mjs",
+    "test": "cd test && node --test",
+    "test:integration": "cd test && node --test integration.test.mjs",
+    "test:excel": "node test/excel-compare.mjs && powershell -NoProfile -ExecutionPolicy Bypass -File test/excel-reference.ps1 && node test/excel-compare.mjs --check",
+    "deploy:backend": "wrangler deploy --config worker/wrangler.jsonc",
+    "deploy:pages": "npm run build && wrangler pages deploy dist --project-name ev-consumption --branch dev",
+    "admin:config": "node scripts/admin-config.mjs"
+  },
+  "devDependencies": {
+    "miniflare": "^4.0.0",
+    "wrangler": "^4.0.0"
+  },
+  "overrides": {
+    "sharp": "0.35.4",
+    "undici": "7.29.1"
+  }
+}

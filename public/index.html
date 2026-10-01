@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>纯电汽车电耗统计</title><link rel="stylesheet" href="/style.css"></head>
+<body>
+<header><a class="brand" href="/">EV / 电耗手账</a><div id="identity"></div><a href="/admin.html" class="subtle">管理员</a></header>
+<main>
+<section id="auth" class="auth card">
+  <div class="eyebrow">从每一次充电开始</div><h1>看清你的真实电耗</h1><p class="muted">记录充电，了解成本与续航。你的数据独立保存。</p>
+  <div class="tabs"><button id="login-tab" class="active" type="button">登录</button><button id="register-tab" type="button">邀请码注册</button></div>
+  <form id="auth-form"><label>用户名<input id="username" autocomplete="username" minlength="2" maxlength="32" required></label><label>密码<input id="password" type="password" autocomplete="current-password" minlength="12" maxlength="128" required><small>12 至 128 个字符</small></label><label id="invite-label" hidden>邀请码<input id="invite" autocomplete="off" maxlength="32"></label><button class="primary" id="auth-submit">登录</button></form>
+</section>
+<section id="workspace" hidden>
+  <div class="title-row"><div><div class="eyebrow">我的车辆 · 购电口径</div><h1>电耗与充电成本</h1></div><div class="actions"><span id="save-status" class="muted">已保存</span><button id="reload">重新加载</button><button id="save" class="primary">保存修改</button><button id="logout">退出</button></div></div>
+  <nav class="tabs"><button data-tab="overview" class="active">统计总览</button><button data-tab="records">充电记录</button><button data-tab="periods">分期统计</button></nav>
+  <section id="overview" class="panel">
+    <div class="card vehicle"><label>电池容量 <small>kWh</small><input id="battery" inputmode="decimal" placeholder="如 60"></label><label>标称续航 <small>km · 保持同一标准</small><input id="range" inputmode="decimal" placeholder="如 500"></label><div id="counts" class="muted"></div></div>
+    <div id="highlights" class="highlights"></div>
+    <div class="card table-wrap"><table><thead><tr><th>指标</th><th>充满区间统计</th><th>全部记录累计估算</th><th>单位</th></tr></thead><tbody id="metrics"></tbody></table></div>
+    <div class="card"><h2>数据备份与迁移</h2><p class="muted">导出包含当前页面的修改。导入兼容原 Excel JSON 备份，保存导入时会保留一份替换前的数据。</p><div class="actions"><button id="export">导出 JSON</button><label class="button">导入 JSON<input id="import" type="file" accept=".json,application/json" hidden></label><button id="restore">恢复导入前备份</button></div></div>
+    <div class="card notes"><h2>统计口径</h2><p>充满指达到 100%，日常 80% 上限应选择“否”。充满区间不计起点充电，计入终点充电及中间补电；未结束区间不计入。</p><p>全部累计以首次充电结束为基准，从第 2 条计电、计费，首尾剩余电量差会形成误差。电耗包含充电损耗与停车耗电，等效续航和达成率均为估算。</p><p>请按时间和里程顺序连续录入。免费充电金额填 0；有异常时统计结果暂不显示。</p></div>
+  </section>
+  <section id="records" class="panel" hidden>
+    <div class="title-row"><p class="muted">按时间顺序连续录入，记录数量不设上限。空行与异常输入会保留。</p><div class="actions"><button id="add-record" class="primary">新增记录</button></div></div>
+    <div class="card table-wrap"><table class="records-table"><thead><tr><th>序号</th><th>日期</th><th>累计里程 km</th><th>充电量 kWh</th><th>金额 元</th><th>充满</th><th>备注</th><th>单价</th><th>状态</th><th>区间 km</th><th>区间 kWh</th><th>区间 元</th><th>区间电耗</th><th>操作</th></tr></thead><tbody id="record-rows"></tbody></table></div>
+    <div class="pagination"><button id="previous">上一页</button><span id="page-label"></span><button id="next">下一页</button></div>
+  </section>
+  <section id="periods" class="panel" hidden>
+    <div class="card vehicle"><label>统计粒度<select id="grain"><option>月度</option><option>季度</option><option>年度</option></select></label><label>查看年份<input id="year" inputmode="numeric"></label><p class="muted">年度显示所选年份及此前四年。<br>电耗按完整区间的结束日期归属。</p></div>
+    <p id="period-status" class="muted"></p><div id="charts" class="charts"></div>
+    <div class="card table-wrap"><table><thead><tr><th>期间</th><th>充电量 kWh</th><th>支出 元</th><th>完整区间数</th><th>区间里程 km</th><th>区间电量 kWh</th><th>区间费用 元</th><th>电耗 kWh/100km</th><th>成本 元/km</th><th>达成率</th><th>购电单价</th></tr></thead><tbody id="period-rows"></tbody></table></div>
+    <p class="muted">分期充电量与支出包含首条基准充电；跨期充满区间整体归入结束日期所在期间，不代表精确自然月电耗。</p>
+  </section>
+</section>
+<div id="message" role="status" aria-live="polite" hidden></div>
+</main><footer>纯电汽车电耗统计 · 数据由你掌握</footer><script type="module" src="/app.js"></script>
+</body></html>

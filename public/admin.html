@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>管理员 · 电耗手账</title><link rel="stylesheet" href="/style.css"></head><body>
+<header><a class="brand" href="/">EV / 电耗手账</a><span class="subtle">管理员</span></header>
+<main>
+<section id="admin-auth" class="auth card"><div class="eyebrow">管理员入口</div><h1>管理邀请与用户</h1><p class="muted">使用后台配置的管理员密码登录。</p><form id="admin-login"><label>管理员密码<input id="admin-password" type="password" autocomplete="current-password" required maxlength="128"></label><button class="primary">登录</button></form></section>
+<section id="admin-workspace" hidden>
+  <div class="title-row"><h1>邀请与用户</h1><button id="admin-logout">退出</button></div>
+  <section class="card"><div class="eyebrow">01 / 生成邀请码</div><h2>邀请新用户</h2><form id="generate" class="inline-form"><label>生成数量 N<input id="invite-count" type="number" min="1" step="1" value="1" required></label><button class="primary">生成邀请码</button></form><p id="generation-status" class="muted"></p><textarea id="generated" rows="5" readonly aria-label="本次生成的邀请码" placeholder="生成后可在此复制邀请码"></textarea><button id="download-invites">下载本次邀请码</button></section>
+  <section class="card"><div class="title-row"><div><div class="eyebrow">02 / 用户管理</div><h2>邀请码与关联用户</h2></div><button id="refresh-invites">刷新</button></div><p class="muted">邀请码注册成功一次即失效。写入次数为该用户累计成功确认的 KV 写入，包含账户、记录分块和保存清单；统计本身不写 KV。</p><div class="table-wrap"><table><thead><tr><th>邀请码</th><th>状态</th><th>关联用户名</th><th>KV 写入次数</th><th>操作</th></tr></thead><tbody id="invites"></tbody></table></div><button id="more-invites" hidden>加载更多</button></section>
+</section><div id="message" role="status" aria-live="polite" hidden></div>
+</main><footer>纯电汽车电耗统计 · 管理员</footer><script type="module" src="/admin.js"></script></body></html>

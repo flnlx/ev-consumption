@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ev-consumption",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-08-01",
+  "durable_objects": {
+    "bindings": [{ "name": "STATE", "class_name": "Coordinator", "script_name": "ev-consumption-backend" }]
+  },
+  "env": {
+    "preview": { "durable_objects": { "bindings": [] } }
+  }
+}
