@@ -1,4 +1,5 @@
 import { fields, dateSerial } from "./data.js";
+import { selectedPeriods } from "./periods.js";
 
 const number = (value) => typeof value === "number" && Number.isFinite(value);
 const sum = (rows, field) => rows.reduce((total, row) => total + (number(row[field]) ? row[field] : 0), 0);
@@ -6,7 +7,7 @@ const blank = (value) => value === null || value === "";
 // Excel compares a numeric cell as less than a text or boolean cell; JS would coerce it.
 const less = (value, previous) => typeof previous === "boolean" || (typeof previous === "string" && previous !== "") || value < (previous ?? 0);
 
-export function calculate(data) {
+export function calculate(data, selection = null) {
   const state = { lastFull: null, energy: 0, amount: 0 };
   const records = data.chargingRecords.filter((row) => fields.some((field) => !blank(row[field])));
   const bySlot = new Map(records.map((row) => [row.slot, row]));
@@ -18,8 +19,10 @@ export function calculate(data) {
         ? "数值无效"
         : record.slot > 1 && (!previous || blank(previous.dateValue))
           ? "请连续录入"
-          : record.slot > 1 && (less(record.dateValue, previous.dateValue) || less(record.odometerKm, previous.odometerKm))
-            ? "日期或里程倒退" : "正常";
+          : record.slot > 1 && less(Math.floor(record.dateValue), number(previous.dateValue) ? Math.floor(previous.dateValue) : previous.dateValue)
+            ? "日期早于上一条"
+            : record.slot > 1 && less(record.odometerKm, previous.odometerKm)
+              ? "累计里程小于上一条" : "正常";
     const previousFull = state.lastFull;
     if (status === "正常") { state.energy += record.chargedKwh; state.amount += record.amountCny; }
     const closed = status === "正常" && record.fullCharge === "是" && previousFull;
@@ -55,8 +58,9 @@ export function calculate(data) {
   const allMetrics = metrics(allDistance, allReady ? sum(rows.filter((row) => row.slot > 1), "chargedKwh") : null, allReady ? sum(rows.filter((row) => row.slot > 1), "amountCny") : null,
     count >= 2 ? first : null, count >= 2 ? last : null,
     anomalies ? "请修正异常记录" : count < 2 ? "需要两条记录" : allDistance <= 0 ? "累计里程不足" : "累计估算");
-  const viewValid = number(data.view.year) && Number.isInteger(data.view.year) && data.view.year >= 1900 && data.view.year <= 9998 && ["月度", "季度", "年度"].includes(data.view.grain);
-  const periods = !viewValid ? [] : Array.from({ length: data.view.grain === "月度" ? 12 : data.view.grain === "季度" ? 4 : 5 }, (_, index) => {
+  const selected = selection ? selectedPeriods(selection, data.view.grain) : null;
+  const viewValid = selection ? selected !== null : number(data.view.year) && Number.isInteger(data.view.year) && data.view.year >= 1900 && data.view.year <= 9998 && ["月度", "季度", "年度"].includes(data.view.grain);
+  const bounds = selection ? selected ?? [] : !viewValid ? [] : Array.from({ length: data.view.grain === "月度" ? 12 : data.view.grain === "季度" ? 4 : 5 }, (_, index) => {
     // Excel DATE treats years 0..1899 as offsets from 1900, including the five-year view at the lower boundary.
     const rawYear = data.view.grain === "年度" ? data.view.year - 4 + index : data.view.year;
     const year = rawYear >= 0 && rawYear < 1900 ? rawYear + 1900 : rawYear;
@@ -65,12 +69,17 @@ export function calculate(data) {
     const begin = dateSerial(`${year.toString().padStart(4, "0")}-${String(month + 1).padStart(2, "0")}-01`);
     const endDate = new Date(Date.UTC(year, month + months, 1)).toISOString().slice(0, 10);
     const end = dateSerial(endDate);
+    return { begin, end, label: data.view.grain === "月度" ? `${year}-${String(month + 1).padStart(2, "0")}` : data.view.grain === "季度" ? `${year} Q${index + 1}` : String(year) };
+  });
+  const periods = bounds.map((period) => {
+    const begin = period.begin;
+    const end = period.end;
     const purchased = rows.filter((row) => number(row.dateValue) && row.dateValue >= begin && row.dateValue < end);
     const closed = intervals.filter((row) => row.dateValue >= begin && row.dateValue < end);
     const distance = !anomalies && closed.length ? sum(closed, "distance") : null;
     const energy = !anomalies && closed.length ? sum(closed, "energy") : null;
     const amount = !anomalies && closed.length ? sum(closed, "amount") : null;
-    return { label: data.view.grain === "月度" ? `${year}-${String(month + 1).padStart(2, "0")}` : data.view.grain === "季度" ? `${year} Q${index + 1}` : String(year),
+    return { ...period,
       purchasedEnergy: !anomalies && purchased.length ? sum(purchased, "chargedKwh") : null,
       purchasedAmount: !anomalies && purchased.length ? sum(purchased, "amountCny") : null,
       intervalCount: anomalies ? null : closed.length,

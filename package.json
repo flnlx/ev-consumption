@@ -14,11 +14,15 @@
     "admin:config": "node scripts/admin-config.mjs"
   },
   "devDependencies": {
+    "esbuild": "0.28.1",
     "miniflare": "^4.0.0",
     "wrangler": "^4.0.0"
   },
   "overrides": {
     "sharp": "0.35.4",
     "undici": "7.29.1"
+  },
+  "dependencies": {
+    "@noble/hashes": "2.0.1"
   }
 }

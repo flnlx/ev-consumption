@@ -6,11 +6,12 @@ import { emptyData, emptyRecord } from "../public/lib/data.js";
 import { hashRecords, splitRecords } from "../public/lib/chunks.js";
 import { mkdir, mkdtemp } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import { bundle } from "../scripts/bundle.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 await mkdir(`${root}/.artifact`, { recursive: true });
 const persistence = await mkdtemp(`${root}/.artifact/integration-`);
-const options = { modules: true, modulesRules: [{ type: "ESModule", include: ["**/*.js"] }], scriptPath: `${root}/test/fixture-worker.js`, modulesRoot: root, compatibilityDate: "2026-08-01", kvNamespaces: ["DATA"],
+const options = { modules: true, script: await bundle(`${root}/test/fixture-worker.js`), compatibilityDate: "2026-08-01", kvNamespaces: ["DATA"],
   durableObjects: { STATE: { className: "TestCoordinator", useSQLite: true } }, bindings: { SESSION_SECRET: "test-only-secret-with-at-least-thirty-two-characters" }, kvPersist: `${persistence}/kv`, durableObjectsPersist: `${persistence}/do` };
 const fixture = { mf: null, stub: null, kv: null, counter: 1 };
 async function initialize() {
@@ -46,6 +47,12 @@ async function save(cookie, records, revision, imported = false) {
 test("Cloudflare 本地 KV / SQLite Durable Objects 集成", async (t) => {
   t.after(async () => fixture.mf?.dispose());
   await initialize();
+  await t.test("真实 Worker 环境执行线上加密限制兼容路径", async () => {
+    const result = await request("/test/crypto-limit");
+    assert.equal(result.status, 200);
+    assert.equal(result.body.hash, (await passwordConfig("compatibility-test-password", "AAAAAAAAAAAAAAAAAAAAAA")).hash);
+    assert.ok(result.body.elapsedMs < 30000, "密码计算须在 DO 默认执行预算内完成");
+  });
   await fixture.kv.put("config:admin", JSON.stringify(await passwordConfig("admin-password-123456")));
   const adminLogin = await request("/admin/login", "POST", { password: "admin-password-123456" });
   assert.equal(adminLogin.status, 200);

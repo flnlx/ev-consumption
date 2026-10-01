@@ -3,6 +3,7 @@ import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { Miniflare } from "miniflare";
 import { passwordConfig } from "../worker/security.js";
+import { bundle } from "./bundle.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 await mkdir(`${root}/.wrangler/local`, { recursive: true });
@@ -10,7 +11,7 @@ const secret = await readFile(`${root}/.wrangler/local/secret`, "utf8").catch(as
   const value = `${crypto.randomUUID()}${crypto.randomUUID()}`;
   await writeFile(`${root}/.wrangler/local/secret`, value); return value;
 });
-const mf = new Miniflare({ modules: true, modulesRules: [{ type: "ESModule", include: ["**/*.js"] }], scriptPath: `${root}/worker/index.js`, modulesRoot: root, compatibilityDate: "2026-08-01",
+const mf = new Miniflare({ modules: true, script: await bundle(`${root}/worker/index.js`), compatibilityDate: "2026-08-01",
   kvNamespaces: ["DATA"], durableObjects: { STATE: { className: "Coordinator", useSQLite: true } }, bindings: { SESSION_SECRET: secret },
   kvPersist: `${root}/.wrangler/local/kv`, durableObjectsPersist: `${root}/.wrangler/local/do` });
 const kv = await mf.getKVNamespace("DATA");

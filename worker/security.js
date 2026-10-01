@@ -10,9 +10,24 @@ export function unbase64(value) {
 }
 
 export async function passwordConfig(password, salt = base64(crypto.getRandomValues(new Uint8Array(16)))) {
-  const key = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveBits"]);
-  const hash = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: unbase64(salt), iterations }, key, 256);
+  const hash = await derivePassword(password, salt);
   return { algorithm: "PBKDF2-SHA256", iterations, salt, hash: base64(hash) };
+}
+
+export async function derivePassword(password, salt, subtle = crypto.subtle) {
+  const key = await subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveBits"]);
+  return subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: unbase64(salt), iterations }, key, 256).catch((error) => {
+    if (error.name !== "NotSupportedError") throw error;
+    return portablePassword(password, salt);
+  });
+}
+
+// Hosted Workers can cap native PBKDF2 iterations; local workerd does not enforce that cap.
+// Compute the identical hash without changing existing credentials or weakening the iteration count.
+export async function portablePassword(password, salt) {
+  const { pbkdf2Async } = await import("@noble/hashes/pbkdf2.js");
+  const { sha256 } = await import("@noble/hashes/sha2.js");
+  return pbkdf2Async(sha256, encoder.encode(password), unbase64(salt), { c: iterations, dkLen: 32 });
 }
 
 export async function verifyPassword(password, config) {
@@ -27,7 +42,7 @@ export async function digest(text) {
 }
 
 async function sessionKey(secret) {
-  if (typeof secret !== "string" || secret.length < 32) throw new Error("尚未配置至少 32 字符的 SESSION_SECRET。");
+  if (typeof secret !== "string" || secret.length < 32) throw Object.assign(new Error("尚未配置至少 32 字符的 SESSION_SECRET。"), { status: 503 });
   return crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
 }
 

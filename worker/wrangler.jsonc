@@ -1,10 +1,30 @@
 {
-  "$schema": "../node_modules/wrangler/config-schema.json",
-  "name": "ev-consumption-backend",
-  "main": "index.js",
-  "compatibility_date": "2026-08-01",
-  "workers_dev": false,
-  "kv_namespaces": [{ "binding": "DATA", "id": "REPLACE_WITH_KV_NAMESPACE_ID" }],
-  "durable_objects": { "bindings": [{ "name": "STATE", "class_name": "Coordinator" }] },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Coordinator"] }]
+	"$schema": "../node_modules/wrangler/config-schema.json",
+	"name": "ev-consumption-backend",
+	"main": "index.js",
+	"compatibility_date": "2026-08-01",
+	"workers_dev": false,
+	"kv_namespaces": [
+		{
+			"binding": "DATA",
+			"id": "da374393af4a4fdc80592d82cbc6beed",
+			"remote": true
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "STATE",
+				"class_name": "Coordinator"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": [
+				"Coordinator"
+			]
+		}
+	]
 }

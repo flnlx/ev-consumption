@@ -142,7 +142,13 @@ button:hover,.button:hover {
 }
 button:disabled {
   opacity:.5;
-  cursor:wait
+  cursor:not-allowed
+}
+.primary:disabled,.primary:disabled:hover {
+  background:#e3e7e5;
+  border-color:#d4dad7;
+  color:#68756e;
+  opacity:1
 }
 .primary {
   background:var(--accent);
@@ -165,11 +171,23 @@ button:disabled {
 .title-row h1 {
   margin-bottom:10px
 }
+.save-control {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.save-control #save-status {
+  font-size: 12px;
+}
 .actions {
   display:flex;
   gap:10px;
   align-items:center;
   flex-wrap:wrap
+}
+.actions:has(.save-control) {
+  align-items:flex-start
 }
 .vehicle {
   display:flex;
@@ -248,6 +266,10 @@ table.records-table td {
   width:65px;
   background:#fffdf4
 }
+.records-table tr:focus-within { outline:2px solid #87b9aa; outline-offset:-2px }
+.records-table tr { scroll-margin-top:24px }
+.record-tools { display:flex; align-items:flex-end; gap:12px; flex-shrink:0 }
+.record-tools label { margin:0 }
 .error-text {
   color:#b04235
 }
@@ -263,6 +285,46 @@ table.records-table td {
   grid-template-columns:1fr 1fr;
   gap:18px
 }
+.period-toolbar,.month-values {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap
+}
+.period-toolbar label { min-width:140px }
+.month-values { justify-content:center; margin:22px 0 16px }
+.month-values label { flex:1; max-width:240px; min-width:120px }
+.month-values input { width:100%; min-width:0 }
+.month-slider { position:relative; height:44px; margin:0 12px }
+.month-track { position:absolute; left:0; right:0; height:6px; top:19px; background:#dce6e0; border-radius:6px }
+#month-selection { position:absolute; height:100%; background:var(--accent); border-radius:6px }
+.month-slider input[type=range] {
+  position:absolute; inset:0; width:100%; height:44px; margin:0; padding:0;
+  border:0; background:transparent; appearance:none; pointer-events:none; box-shadow:none
+}
+.month-slider input[type=range]::-webkit-slider-runnable-track { height:6px; background:transparent }
+.month-slider input[type=range]::-webkit-slider-thumb {
+  appearance:none; width:26px; height:26px; margin-top:-10px; border-radius:50%;
+  background:#fff; border:3px solid var(--accent); box-shadow:0 2px 6px #163f3433; pointer-events:auto; cursor:grab
+}
+.month-slider input[type=range]::-moz-range-track { height:6px; background:transparent }
+.month-slider input[type=range]::-moz-range-thumb {
+  width:22px; height:22px; border-radius:50%; background:#fff;
+  border:3px solid var(--accent); pointer-events:auto; cursor:grab
+}
+.month-slider input[type=range]:focus-visible::-webkit-slider-thumb { outline:3px solid #8dbbb0; outline-offset:3px }
+.month-slider input[type=range]:focus-visible::-moz-range-thumb { outline:3px solid #8dbbb0; outline-offset:3px }
+.month-slider.same-month #period-start { top:-8px }
+.month-slider.same-month #period-end { top:8px }
+.month-ticks { position:relative; height:30px; font-size:12px; color:var(--muted); margin:0 12px 20px }
+.month-ticks span { position:absolute; padding-top:10px; transform:translateX(-50%); white-space:nowrap }
+.month-ticks span:first-child { transform:none }
+.month-ticks span:last-child { transform:translateX(-100%) }
+.month-ticks span::before { content:""; position:absolute; top:0; left:50%; height:6px; width:1px; background:#8b9e95 }
+.chart-point { fill:transparent; stroke:transparent; cursor:pointer }
+.chart-point:focus,.chart-point:hover { fill:#13796b22; stroke:var(--accent); outline:none }
+.chart-detail { font-size:12px; min-height:2em; margin-bottom:0 }
 .chart {
   min-width:0
 }
@@ -277,7 +339,7 @@ table.records-table td {
   margin-bottom:10px
 }
 .chart-label {
-  font-size:11px;
+  font-size:14px;
   fill:#75877f
 }
 .chart-line {
@@ -366,6 +428,11 @@ button:focus-visible {
   .actions {
     gap:8px
   }
+  .month-ticks { font-size:10px; margin-left:0; margin-right:0 }
+  .month-values { gap:8px }
+  .period-toolbar .actions { width:100% }
+  .chart-label { font-size:22px }
+  .chart-point { r:20px }
   .tabs button {
     padding:10px 12px
   }
@@ -448,10 +515,10 @@ input,select,textarea {
     width:100%
   }
   .chart {
-    overflow-x:auto
+    overflow:hidden
   }
   .chart svg {
-    min-width:480px
+    min-width:0
   }
   button,.button {
     min-height:44px

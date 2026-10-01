@@ -51,7 +51,28 @@ test("异常输入使统计留空；零金额有效，数字文本保留原类�
   data.view.year = 2025.5;
   assert.deepEqual(calculate(data).periods, []);
   const textPrevious = ledger(); textPrevious.chargingRecords[1].dateValue = "45600";
-  assert.equal(calculate(textPrevious).rows[2].status, "日期或里程倒退");
+  assert.equal(calculate(textPrevious).rows[2].status, "日期早于上一条");
+});
+
+test("同日多条按记录顺序统计，允许同里程，忽略导入日期的隐藏时间", () => {
+  const data = ledger();
+  data.chargingRecords = [
+    { ...data.chargingRecords[0], dateValue: dateSerial("2025-01-05") + .75 },
+    { ...data.chargingRecords[1], dateValue: dateSerial("2025-01-05"), odometerKm: 1000 },
+    { ...data.chargingRecords[2], dateValue: dateSerial("2025-01-05"), odometerKm: 1100 },
+  ];
+  const result = calculate(data);
+  assert.deepEqual(result.rows.map((row) => row.status), ["正常", "正常", "正常"]);
+  assert.equal(result.full.distance, 100);
+  assert.equal(result.full.energy, 80);
+  assert.equal(result.full.amount, 60);
+  assert.equal(result.periods[0].purchasedEnergy, 100);
+  assert.equal(result.periods[0].intervalCount, 1);
+  data.chargingRecords[1].odometerKm = 999;
+  assert.equal(calculate(data).rows[1].status, "累计里程小于上一条");
+  data.chargingRecords[1].odometerKm = 1000;
+  data.chargingRecords[1].dateValue = dateSerial("2025-01-04") + .99;
+  assert.equal(calculate(data).rows[1].status, "日期早于上一条");
 });
 
 test("无记录、只有一条、零里程、空行和缺失图表值", () => {

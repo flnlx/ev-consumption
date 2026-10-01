@@ -1,5 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
 import { CoordinatorService } from "../worker/service.js";
+import { base64, derivePassword } from "../worker/security.js";
 
 export class TestCoordinator extends DurableObject {
   constructor(ctx, env) {
@@ -17,7 +18,15 @@ export class TestCoordinator extends DurableObject {
       },
     } });
   }
-  fetch(request) {
+  async fetch(request) {
+    if (new URL(request.url).pathname === "/api/test/crypto-limit") {
+      const started = Date.now();
+      const hash = await derivePassword("compatibility-test-password", "AAAAAAAAAAAAAAAAAAAAAA", {
+        importKey: (...args) => crypto.subtle.importKey(...args),
+        deriveBits: async () => { throw new DOMException("Hosted iteration limit", "NotSupportedError"); },
+      });
+      return Response.json({ hash: base64(hash), elapsedMs: Date.now() - started });
+    }
     this.fault = request.headers.get("X-Test-Fault");
     if (this.fault === "stale") this.service.cache.clear();
     return this.service.fetch(request);
