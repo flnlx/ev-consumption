@@ -32,9 +32,23 @@ function periodControls() {
   $("#month-selection").style.left = `${(periodState.start - min) / (max - min) * 100}%`;
   $("#month-selection").style.width = `${(periodState.end - periodState.start) / (max - min) * 100}%`;
   $(".month-slider").classList.toggle("same-month", periodState.start === periodState.end);
-  const ticks = Array.from({ length: 5 }, (_, index) => Math.round(min + (max - min) * index / 4));
-  $("#month-ticks").innerHTML = ticks.map((month, index) => `<span style="left:${index * 25}%">${monthText(month)}</span>`).join("");
+  monthTicks();
 }
+function monthTicks() {
+  const width = $("#month-ticks").getBoundingClientRect().width;
+  const min = Number($("#period-start").min);
+  const max = Number($("#period-start").max);
+  const count = Math.min(5, Math.max(2, Math.floor(width / 90) + 1));
+  const ticks = Array.from({ length: count }, (_, index) => Math.round(min + (max - min) * index / (count - 1)));
+  $("#month-ticks").replaceChildren(...ticks.map((month) => {
+    const tick = document.createElement("span");
+    tick.textContent = monthText(month);
+    // CSS property assignment works with Pages style-src 'self'; HTML style attributes do not.
+    tick.style.left = `${(month - min) / (max - min) * 100}%`;
+    return tick;
+  }));
+}
+new ResizeObserver(() => monthTicks()).observe($("#month-ticks"));
 function saveStatus() {
   $("#save").disabled = state.busy || !state.dirty;
   $("#save-status").textContent = state.dirty ? "有未保存修改" : `已保存 · 累计 ${state.writes} 次写入`;

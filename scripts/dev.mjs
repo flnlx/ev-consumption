@@ -19,6 +19,10 @@ if (!await kv.get("config:admin")) await kv.put("config:admin", JSON.stringify(a
 const namespace = await mf.getDurableObjectNamespace("STATE");
 const backend = namespace.get(namespace.idFromName("ev-consumption-v1"));
 const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json; charset=utf-8" };
+const staticHeaders = Object.fromEntries((await readFile(`${root}/public/_headers`, "utf8")).split(/\r?\n/).flatMap((line) => {
+  const header = line.match(/^\s+([^:]+):\s*(.+)$/);
+  return header ? [[header[1], header[2]]] : [];
+}));
 const server = createServer(async (req, res) => {
   const origin = `http://127.0.0.1:${server.address().port}`;
   const pathname = new URL(req.url, origin).pathname;
@@ -35,7 +39,7 @@ const server = createServer(async (req, res) => {
   const file = await readFile(`${root}/public/${path}`).catch(() => null);
   if (!file) { res.writeHead(404); res.end("Not found"); return; }
   const extension = path.slice(path.lastIndexOf("."));
-  res.writeHead(200, { "Content-Type": types[extension] ?? "application/octet-stream", "Cache-Control": "no-store" }); res.end(file);
+  res.writeHead(200, { ...staticHeaders, "Content-Type": types[extension] ?? "application/octet-stream", "Cache-Control": "no-store" }); res.end(file);
 });
 server.listen(Number(process.env.PORT ?? 8788), "127.0.0.1", () => console.log(`本地网页：http://127.0.0.1:${server.address().port}\n管理员：http://127.0.0.1:${server.address().port}/admin.html\n首次本地管理员密码：local-admin-password（仅本地测试，正式部署不会设置此密码）`));
 for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, async () => { server.close(); await mf.dispose(); process.exit(0); });

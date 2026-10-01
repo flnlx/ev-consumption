@@ -428,7 +428,7 @@ button:focus-visible {
   .actions {
     gap:8px
   }
-  .month-ticks { font-size:10px; margin-left:0; margin-right:0 }
+  .month-ticks { font-size:12px; margin-left:0; margin-right:0 }
   .month-values { gap:8px }
   .period-toolbar .actions { width:100% }
   .chart-label { font-size:22px }
